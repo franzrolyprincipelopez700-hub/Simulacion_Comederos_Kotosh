@@ -1,0 +1,21 @@
+{
+  "created_utc": "2026-10-09T04:05:36.080567+00:00",
+  "format": "PostgreSQL custom",
+  "postgresql_source_major": 18,
+  "model_version": "1.0.0",
+  "revision": "003",
+  "rows": {
+    "alembic_version": 1,
+    "scenarios": 1,
+    "scenario_versions": 1,
+    "experiments": 11,
+    "runs": 819,
+    "run_details": 47,
+    "datasets": 0,
+    "observations": 0,
+    "validation_records": 0,
+    "workspace_settings": 1
+  },
+  "sha256": "c5cd9f584b2dccd864bdcc231c7c8cdde7998747f0e16ce15786c4342fddcd24",
+  "bytes": 1576925
+}

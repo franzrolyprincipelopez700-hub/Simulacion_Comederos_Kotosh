@@ -1,0 +1,174 @@
+SIMULADOR AVÍCOLA KOTOSH — INSTALACIÓN LOCAL EN WINDOWS
+====================================================
+
+Este proyecto ayuda a comparar el abastecimiento de comederos considerando
+tiempo sin alimento accesible, desperdicio y trabajo del responsable.
+Incluye código fuente, dependencias fijadas, migraciones y una copia PostgreSQL
+con escenarios e historial de simulaciones. Cada usuario configura SU propia
+contraseña de PostgreSQL; la contraseña de la computadora original no se incluye.
+
+1. DESCARGAR EL PROYECTO
+-----------------------
+Repositorio: https://github.com/franzrolyprincipelopez700-hub/Simulacion_Comederos_Kotosh
+
+Sin Git: abre el repositorio, pulsa Code > Download ZIP y extrae TODO el ZIP.
+No ejecutes scripts dentro del ZIP. Abre la carpeta que contiene este archivo,
+README.md, backend, frontend, database y scripts.
+
+Con Git, ejecuta:
+  git clone https://github.com/franzrolyprincipelopez700-hub/Simulacion_Comederos_Kotosh.git
+  cd Simulacion_Comederos_Kotosh
+
+Si el repositorio es privado, necesitas una invitación y sesión en GitHub.
+Git es opcional cuando usas Download ZIP. No necesitas Jupyter ni Docker.
+
+2. QUÉ INSTALAR ANTES
+--------------------
+Sistema probado: Windows con PowerShell, Python 3.10.8, Node.js 24.17.0 y
+PostgreSQL 18. Usa estas versiones mayores para reproducir esta instalación.
+
+Python 3.10 (64 bits): https://www.python.org/downloads/windows/
+  Marca Add Python to PATH al instalar. El comando python debe usar Python 3.10.
+  Si tienes varias versiones, compruébalo antes de crear el entorno virtual.
+Node.js 24 (64 bits), con npm: https://nodejs.org/en/download
+PostgreSQL 18, servidor y command line tools:
+  https://www.postgresql.org/download/windows/
+  Guarda la contraseña de TU usuario postgres. Puerto habitual: 5432.
+  pgAdmin es opcional; instalar solo pgAdmin no instala el servidor PostgreSQL.
+
+Después de instalar, cierra y vuelve a abrir PowerShell para actualizar PATH.
+Comprueba:
+  python --version
+  node --version
+  npm.cmd --version
+
+Necesitas internet para descargar el proyecto y dependencias. Una vez instalado,
+el cálculo y la consulta de resultados funcionan localmente. Debe estar iniciado
+el servicio PostgreSQL. Chrome solo es necesario para las pruebas de navegador.
+
+3. INSTALAR DEPENDENCIAS
+-----------------------
+Abre PowerShell DENTRO de la carpeta del proyecto: en el Explorador de Windows,
+entra a esa carpeta, escribe powershell en la barra de dirección y pulsa Enter.
+Comprueba que allí esté README.md. No necesitas una ruta específica ni el usuario
+de la computadora original.
+
+Ejecuta:
+  powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+
+El script crea backend/.venv, instala las versiones Python fijadas, ejecuta npm ci
+y compila el frontend. También crea backend/.env a partir de .env.example si falta.
+Bypass se aplica a esa ejecución, no cambia permanentemente la política del equipo.
+Espera a que termine sin errores antes de continuar.
+
+4. CONFIGURAR TU CONEXIÓN POSTGRESQL
+----------------------------------
+Abre:
+  notepad .\backend\.env
+
+Ejemplo (reemplaza TU_PASSWORD):
+  DATABASE_URL=postgresql+psycopg://postgres:TU_PASSWORD@localhost:5432/simulador_avicola
+
+postgres es tu usuario del servidor; simulador_avicola es la base de datos destino.
+Si quieres conservar una base existente, usa otro nombre, por ejemplo:
+simulador_kotosh_copia. Los scripts respetan el nombre configurado en DATABASE_URL.
+Si usas otro puerto o usuario, cambia también esos componentes.
+
+La contraseña debe codificarse como componente URL si contiene caracteres especiales:
+@ se escribe %40, # se escribe %23, / se escribe %2F, : se escribe %3A y % como %25.
+No pegues la contraseña en README ni en el frontend. backend/.env es local y Git
+lo excluye. La copia de la base no incluye usuarios ni contraseñas del servidor.
+
+El usuario necesita permiso para crear la base. Si no lo tiene, un administrador
+debe crear una base vacía con ese nombre y asignarla a tu usuario en pgAdmin.
+
+5. ELEGIR CÓMO PREPARAR LA BASE — A O B
+-------------------------------------
+A. CON EL HISTORIAL INCLUIDO (recomendado para ver los resultados del proyecto)
+
+  .\backend\.venv\Scripts\python.exe .\scripts\restore_database.py
+  powershell -ExecutionPolicy Bypass -File .\scripts\migrate.ps1
+
+La copia está en database/simulador_avicola.backup, formato custom de PostgreSQL.
+La restauración crea la base si falta, exige que esté VACÍA, comprueba SHA-256 y
+compara conteos con el manifiesto. No borra ni sobrescribe una base existente.
+Se ejecuta en una transacción. migrate.ps1 aplica migraciones pendientes y verifica
+la demostración; en la copia actual la revisión ya es 003.
+
+B. BASE NUEVA, SIN HISTORIAL DE EXPERIMENTOS
+
+  powershell -ExecutionPolicy Bypass -File .\scripts\migrate.ps1
+
+Esta opción crea el esquema y un escenario de demostración. No ejecutes B antes
+de restaurar A: la restauración requiere una base vacía. Elige UNA de las rutas.
+
+Si no encuentra pg_restore, agrega la carpeta bin de PostgreSQL al PATH o define,
+en la misma ventana de PowerShell (ajusta la ruta a tu instalación):
+  $env:POSTGRES_BIN = 'C:\Program Files\PostgreSQL\18\bin'
+
+La restauración alternativa en pgAdmin: crea la base vacía, clic derecho > Restore,
+selecciona el .backup, formato Custom, y desactiva restaurar propietario y privilegios
+(No owner / No privileges). Usa PostgreSQL 18; una copia de una versión nueva no
+se debe restaurar en un servidor de versión anterior. El script automatiza además
+la comprobación del archivo y de los conteos.
+
+6. INICIAR Y ABRIR
+-----------------
+  powershell -ExecutionPolicy Bypass -File .\scripts\start.ps1
+
+Abre en el navegador:
+  http://127.0.0.1:5174/
+
+El script inicia API (8000), trabajador de simulación y frontend (5174), en segundo
+plano. Deben estar libres esos dos puertos. PostgreSQL normalmente usa 5432.
+Documentación interactiva de API: http://127.0.0.1:8000/docs
+
+En Guía de uso encontrarás propósito, recorrido, políticas, indicadores, decisiones,
+datos de campo, herramientas, preguntas frecuentes y un glosario con búsqueda.
+Puedes abrir Inicio > Abrir demostración o Historial y reportes para ver el piloto.
+
+Para detener SOLO los procesos creados por este proyecto:
+  powershell -ExecutionPolicy Bypass -File .\scripts\stop.ps1
+
+7. SI ALGO NO FUNCIONA
+---------------------
+python o node no se reconoce:
+  Reabre PowerShell; verifica instalación y PATH. No copies .venv ni node_modules
+  desde otra computadora: vuelve a ejecutar install.ps1.
+
+No conecta a PostgreSQL / authentication failed:
+  Comprueba que el servicio esté iniciado, usuario, contraseña codificada, puerto
+  y nombre de base en backend/.env. Prueba esa conexión con pgAdmin.
+
+La base destino contiene objetos:
+  La restauración se negó a sobrescribirla. Usa un nombre de base nuevo en .env.
+
+Puerto ocupado:
+  Puede que el proyecto ya esté abierto. Prueba la URL; detén una instancia previa
+  con stop.ps1. Si es otra aplicación, libera el puerto por su propio procedimiento.
+  No cierres procesos desconocidos.
+
+Se queda un experimento pendiente:
+  Debe estar activo el trabajador, además de API y frontend. Revisa
+  backend/worker-error.log. Los procesos pueden iniciarse con start.ps1.
+
+Pantalla "Conectando con el backend":
+  Revisa backend/api-error.log y http://127.0.0.1:8000/api/health.
+  Los registros de frontend están en frontend/vite-error.log.
+
+Cambiaste .env mientras la aplicación estaba abierta:
+  Detén con stop.ps1 y vuelve a iniciar para cargar la conexión nueva.
+
+8. COPIAS FUTURAS Y ARCHIVOS
+---------------------------
+Para generar otra copia, espera a que no haya experimentos pendientes/en ejecución:
+  .\backend\.venv\Scripts\python.exe .\scripts\backup_database.py --file .\output\mi_copia.backup
+  .\backend\.venv\Scripts\python.exe .\scripts\restore_database.py --file .\output\mi_copia.backup
+
+El segundo comando requiere una base destino nueva/vacía configurada en .env.
+Guarda juntos el .backup y su .manifest.json. El contenido son tus datos de la
+aplicación: revisa qué compartes si incorporas mediciones de campo en el futuro.
+
+database/ contiene la copia entregada y su inventario. docs/ describe modelo,
+API, operación y comprobaciones. Las dependencias y archivos temporales se
+recrean al instalar y no forman parte del repositorio.
